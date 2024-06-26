@@ -1,19 +1,22 @@
+//initial empty array for books
 const myLibrary = [];
 
+//button to open dialog for adding a book
 const button = document.createElement('button');
 button.textContent = 'Add new book';
 document.body.appendChild(button)
-
-const container = document.createElement('div');
-container.id = 'array-container';
-document.body.appendChild(container);
-
 button.onclick = function() {
     addBooktoLibrary()
 };
 
+//the container for all the books to be displayed
+const container = document.createElement('div');
+container.id = 'array-container';
+document.body.appendChild(container);
 
 
+
+//the form that shows up when the dialog is opened
 function addBooktoLibrary(){
     //create dialog and form elements
     const dialog = document.createElement("dialog");
@@ -59,21 +62,18 @@ function addBooktoLibrary(){
     document.body.appendChild(dialog);
     dialog.showModal();
 
+    //creates the book object, appends to array, and iterates through array
     form.onsubmit = function() {
         const newBook = new Book(title.value, author.value, pages.value, read.checked);
         myLibrary.push(newBook)
-        container.innerHTML = ''
-        for(let i = 0; i < myLibrary.length; i++) {
-            addBookToLibraryDisplay(myLibrary[i]);
-        }
+        displayLibrary();
         dialog.close();
         dialog.remove();
     };
 }
 
-
-
-function addBookToLibraryDisplay(book) {
+//creates the article for a book to be displayed
+function addBookToLibraryDisplay(book, index) {
     const article = document.createElement('article');
 
     const title = document.createElement('p');
@@ -88,19 +88,36 @@ function addBookToLibraryDisplay(book) {
     const read = document.createElement('p');
     read.textContent = `Read: ${book.read ? "Yes" : "No"}`;
 
+    const deleteBook = document.createElement('button');
+    deleteBook.textContent = "Delete this book";
+    deleteBook.onclick = function() {
+        myLibrary.splice(index, 1); 
+        displayLibrary(); 
+    };
+
     article.appendChild(title);
     article.appendChild(author);
     article.appendChild(pages);
     article.appendChild(read);
+    article.appendChild(deleteBook);
 
     container.appendChild(article);
 }
 
 
-
+//book constructor
 function Book(title, author, numPages, read){
     this.title = title;
     this.author = author;
     this.numPages = numPages;
     this.read = read;
+}
+
+//helper function for readability
+function displayLibrary() {
+    container.innerHTML = ''; 
+
+    for (let i = 0; i < myLibrary.length; i++) {
+        addBookToLibraryDisplay(myLibrary[i], i);
+    }
 }
