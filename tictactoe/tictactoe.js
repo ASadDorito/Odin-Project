@@ -1,5 +1,3 @@
-const readline = require('readline');
-
 //game board for tic tac toe, only one is needed, so IIFE
 const gameBoard = (function() {
     let board = [ '-', '-', '-',
@@ -43,97 +41,37 @@ const displayController = (function() {
         player1 = Player('X');
         player2 = Player('O');
         gameBoard.resetBoard();
-        console.log("gaming time bruh");
-        displayBoard();
-        playTurn();
-    }
-    
-    const displayBoard = () => {
-        const board = gameBoard.getBoard();
-        console.log('\n' +
-            ` ${board[0]} | ${board[1]} | ${board[2]} \n` +
-            '-----------\n' +
-            ` ${board[3]} | ${board[4]} | ${board[5]} \n` +
-            '-----------\n' +
-            ` ${board[6]} | ${board[7]} | ${board[8]} \n`
-        );
+        updateDisplay();
+        enableBoard();
+        document.getElementById('status').textContent = "Player 1's turn (X)";
     };
-
-    const playTurn = () => {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
-
-        rl.question(`Player ${currentPlayer}, enter your move (0-8): `, (answer) => {
-            const move = parseInt(answer);
-            if (isNaN(move) || move < 0 || move > 8) {
-                console.log("Invalid move. Please enter a number between 0 and 8.");
-                rl.close();
-                playTurn();
-            } else {
-                rl.close();
-                makeMove(move);
-            }
-        });
+    
+    const updateDisplay = () => {
+        const board = gameBoard.getBoard();
+        const cells = document.getElementsByClassName('cell');
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].textContent = board[i] === '-' ? '' : board[i];
+        }
     };
 
     const makeMove = (index) => {
         const currentSign = currentPlayer === 1 ? player1.getSign() : player2.getSign();
         if (gameBoard.setTile(index, currentSign)) {
-            displayBoard();
+            updateDisplay();
             if (checkWin()) {
-                console.log(`Player ${currentPlayer} wins!`);
-                askForNewGame();
+                document.getElementById('status').textContent = `Player ${currentPlayer} wins!`;
+                disableBoard();
             } else if (checkDraw()) {
-                console.log("It's a draw!");
-                askForNewGame();
+                document.getElementById('status').textContent = "It's a draw!";
+                disableBoard();
             } else {
                 currentPlayer = currentPlayer === 1 ? 2 : 1;
-                playTurn();
+                document.getElementById('status').textContent = `Player ${currentPlayer}'s turn (${currentPlayer === 1 ? 'X' : 'O'})`;
             }
-        } else {
-            console.log("That spot is already taken. Try again.");
-            playTurn();
         }
     };
 
-    const askForNewGame = () => {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
 
-        rl.question("Do you want to play again? (yes/no): ", (answer) => {
-            rl.close();
-            if (answer.toLowerCase() === 'yes') {
-                gameStart();
-            } else {
-                console.log("Thanks for playing!");
-            }
-        });
-    };
-
-    // const updateDisplay = () => {
-    //     const board = gameBoard.getBoard();
-    // };
-
-    // const makeMove = (index) => {
-    //     //turn order
-    //     const currentSign = currentPlayer  === 1 ? player1.getSign() : player2.getSign();
-    //     if (gameBoard.setTile(index, currentSign)) {
-    //         if (checkWin()) {
-    //             // Handle win condition
-    //             console.log(`Player ${currentPlayer} wins!`);
-    //         } else if (checkDraw()) {
-    //             // Handle draw condition
-    //             console.log("It's a draw!");
-    //         } else {
-    //             currentPlayer = currentPlayer === 1 ? 2 : 1;
-    //             updateDisplay();
-    //         }
-    //     }
-    // };
 
     const checkWin = () => {
         const board = gameBoard.getBoard();
@@ -147,8 +85,40 @@ const displayController = (function() {
     const checkDraw = () => {
         return gameBoard.getBoard().every(cell => cell !== '-');
     };
-    return {gameStart};
-    // return { gameStart, makeMove };
+
+    const disableBoard = () => {
+        const cells = document.getElementsByClassName('cell');
+        for (let cell of cells) {
+            cell.removeEventListener('click', cellClickHandler);
+        }
+    };
+
+    const enableBoard = () => {
+        const cells = document.getElementsByClassName('cell');
+        for (let cell of cells) {
+            cell.removeEventListener('click', cellClickHandler);
+            cell.addEventListener('click', cellClickHandler);
+        }
+    };
+
+    const cellClickHandler = function() {
+        const index = this.dataset.index;
+        makeMove(parseInt(index));
+    };
+
+    const initBoard = () => {
+        const board = document.getElementById('board');
+        board.innerHTML = ''; 
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            board.appendChild(cell);
+        }
+        enableBoard();
+    };
+
+    return { gameStart, initBoard};
 
 })();
 
@@ -158,4 +128,11 @@ const Player = (sign) => {
     return { getSign };
 };
 
-displayController.gameStart();
+window.onload = () => {
+    displayController.initBoard();
+    displayController.gameStart();
+    document.getElementById('restartButton').addEventListener('click', () => {
+        displayController.initBoard();
+        displayController.gameStart();
+    });
+};
